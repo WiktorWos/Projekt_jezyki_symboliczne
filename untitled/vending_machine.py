@@ -72,21 +72,28 @@ class VendingMachine:
         print(self.coins[coin])
 
     def buy_product(self, product_id):
-        paid = 0
         for product in self.products:
-            if product_id == product.product_id:
-                while paid < product.price:
-                    coin_value = int(input("please insert a coin: \n"))
-                    paid += coin_value
-                    self.add_coin(Coin(coin_value), 1)
-                if paid > product.price:
-                    print("reszta: " + str(paid - product.price))
-                print("Kupiony produkt: " + str(product))
-                self.print_coins()
+            if int(product_id) == product.product_id:
+                if self.inserted_money >= product.price:
+                    self.products[product] -= 1
+                    self.print_products()
+                    self.inserted_money -= product.price
+                    print("Kupiony produkt: " + str(product))
+                    if self.inserted_money > 0:
+                        print("reszta: " + str(self.inserted_money))
+                        self.inserted_money = 0
+                    return True
+                else:
+                    print("za malo pieniedzy")
+                    return False
 
     def print_coins(self):
         for coin in self.coins:
             print("Coin: " + str(coin) + " quantity: " + str(self.coins[coin]))
+
+    def print_products(self):
+        for product in self.products:
+            print("Coin: " + str(product) + " quantity: " + str(self.products[product]))
 
     def print_temp_coins(self):
         for coin in self.temp_coins:

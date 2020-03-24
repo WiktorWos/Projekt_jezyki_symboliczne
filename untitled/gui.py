@@ -14,6 +14,13 @@ def insert_coin(val):
                         + str(vending_machine.inserted_money % 100) + "gr"
 
 
+def buy_product(product_id):
+    if vending_machine.buy_product(product_id):
+        label['text'] = "Kupiles produkt: id= " + str(product_id)
+    else:
+        label['text'] = "Za malo pieniedzy"
+
+
 root = tk.Tk()
 vending_machine = VendingMachine()
 
@@ -58,4 +65,8 @@ label.place(relwidth=0.4, relheight=1)
 
 textbox = tk.Entry(frame_inserted_value, font=40)
 textbox.place(relx=0.45, relwidth=0.3, relheight=1)
+
+button_buy = tk.Button(frame_inserted_value, text="buy", bg='grey',
+                       command=lambda: buy_product(textbox.get()))
+button_buy.place(relx=0.80, rely=0.2, relwidth=0.1, relheight=0.5)
 root.mainloop()
