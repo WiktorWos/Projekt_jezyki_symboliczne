@@ -15,10 +15,7 @@ def insert_coin(val):
 
 
 def buy_product(product_id):
-    if vending_machine.buy_product(product_id):
-        label['text'] = "Kupiles produkt: id= " + str(product_id)
-    else:
-        label['text'] = "Za malo pieniedzy"
+    label['text'] = vending_machine.buy_product(product_id)
 
 
 root = tk.Tk()

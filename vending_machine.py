@@ -72,20 +72,22 @@ class VendingMachine:
         print(self.coins[coin])
 
     def buy_product(self, product_id):
+        if product_id == '':
+            return "Wprowadz kod produnktu"
+        if int(product_id) < 30 or int(product_id) > 50:
+            return "Bledny kod produktu"
         for product in self.products:
             if int(product_id) == product.product_id:
                 if self.inserted_money >= product.price:
                     self.products[product] -= 1
                     self.print_products()
                     self.inserted_money -= product.price
-                    print("Kupiony produkt: " + str(product))
                     if self.inserted_money > 0:
                         print("reszta: " + str(self.inserted_money))
                         self.inserted_money = 0
-                    return True
+                    return "Kupiony produkt: " + str(product)
                 else:
-                    print("za malo pieniedzy")
-                    return False
+                    return "za malo pieniedzy"
 
     def print_coins(self):
         for coin in self.coins:
