@@ -1,21 +1,11 @@
 import copy
 
 
-class Coin:
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return "value: " + str(self.value)
-
-    def __eq__(self, other):
-        if not isinstance(other, Coin):
-            return NotImplemented
-
-        return self.value == other.value
-
-    def __hash__(self):
-        return hash(self.value)
+DENOMINATIONS = [1, 2, 5, 10, 20, 50, 100, 200, 500]
+DEFAULT_COIN_QUANTITY = 5
+DEFAULT_PRODUCT_QUANTITY = 5
+BAD_PRODUCT_ID, NOT_ENOUGH_MONEY, BOUGHT, STOCK_SHORTAGE = range(4)
+MIN_PRODUCT_ID, MAX_PRODUCT_ID = 30, 50
 
 
 class Product:
@@ -25,12 +15,11 @@ class Product:
         self.price = price
 
     def __str__(self) -> str:
-        return "id: " + str(self.product_id) + ", name:" + str(self.name) + ", price: " + str(self.price)
+        return f"id: {self.product_id}, name: {self.name}, price: {self.price}"
 
     def __eq__(self, other):
         if not isinstance(other, Product):
             return NotImplemented
-
         return (self.product_id == other.product_id) and (self.price == other.price) and (self.name == other.name)
 
     def __hash__(self):
@@ -38,22 +27,9 @@ class Product:
 
 
 class VendingMachine:
-    def __init__(self):
-        self.coins = {
-            Coin(1): 5,
-            Coin(2): 5,
-            Coin(5): 5,
-            Coin(10): 5,
-            Coin(20): 5,
-            Coin(50): 5,
-            Coin(100): 5,
-            Coin(200): 5,
-            Coin(500): 5
-        }
-        self.products = {
-            Product(30, "Coca-cola", 300): 5,
-            Product(31, "Fanta", 280): 5,
-        }
+    def __init__(self, products):
+        self.coins = {denomination: DEFAULT_COIN_QUANTITY for denomination in DENOMINATIONS}
+        self.products = {product: DEFAULT_PRODUCT_QUANTITY for product in products}
         self.temp_coins = self.get_initial_temp_coins()
         self.inserted_money = 0
 
@@ -65,51 +41,49 @@ class VendingMachine:
 
     def add_product(self, product, quantity):
         self.products[product] += quantity
-        print("added product: " + str(product))
+        print(f"added product: {product}")
 
-    def add_coin(self, coin, quantity):
-        self.coins[coin] += quantity
-        print(self.coins[coin])
+    def add_coin(self, coin_value, quantity):
+        self.coins[coin_value] += quantity
+        print(self.coins[coin_value])
 
     def buy_product(self, product_id):
-        if product_id == '':
-            return "Wprowadz kod produnktu"
-        if int(product_id) < 30 or int(product_id) > 50:
-            return "Bledny kod produktu"
+        product_id = int(product_id)
+        product = self.find_product_by_id(product_id)
+        product_quantity = self.products[product]
+        if product_quantity == 0:
+            return STOCK_SHORTAGE
+        if self.inserted_money >= product.price:
+            self.products[product] -= 1
+            self.print_products()
+            self.inserted_money -= product.price
+            if self.inserted_money > 0:
+                print(f"reszta: {self.inserted_money}")
+                self.inserted_money = 0
+            return BOUGHT
+        return NOT_ENOUGH_MONEY
+
+    def find_product_by_id(self, product_id):
         for product in self.products:
-            if int(product_id) == product.product_id:
-                if self.inserted_money >= product.price:
-                    self.products[product] -= 1
-                    self.print_products()
-                    self.inserted_money -= product.price
-                    if self.inserted_money > 0:
-                        print("reszta: " + str(self.inserted_money))
-                        self.inserted_money = 0
-                    return "Kupiony produkt: " + str(product)
-                else:
-                    return "za malo pieniedzy"
+            if product_id == product.product_id:
+                return product
 
     def print_coins(self):
-        for coin in self.coins:
-            print("Coin: " + str(coin) + " quantity: " + str(self.coins[coin]))
+        for coin, quantity in self.coins.items():
+            print(f"Coin: {coin}, quantity: {quantity}")
 
     def print_products(self):
-        for product in self.products:
-            print("Coin: " + str(product) + " quantity: " + str(self.products[product]))
+        for product, quantity in self.products.items():
+            print(f"Product: {product}, quantity: {quantity}")
 
     def print_temp_coins(self):
-        for coin in self.temp_coins:
-            print("Coin: " + str(coin) + " quantity: " + str(self.temp_coins[coin]))
+        for coin, quantity in self.temp_coins.items():
+            print(f"Coin: {coin}, quantity: {quantity}")
 
-    def insert_coin(self, val):
-        coin = Coin(val)
-        self.temp_coins[coin] += 1
+    def insert_coin(self, coin_value):
+        self.temp_coins[coin_value] += 1
         self.print_temp_coins()
-        self.inserted_money += val
-
-
-vending_machine = VendingMachine()
-vending_machine.insert_coin(1)
+        self.inserted_money += coin_value
 
 
 
