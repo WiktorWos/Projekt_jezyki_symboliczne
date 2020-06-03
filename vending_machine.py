@@ -4,7 +4,7 @@ import copy
 DENOMINATIONS = [1, 2, 5, 10, 20, 50, 100, 200, 500]
 DEFAULT_COIN_QUANTITY = 5
 DEFAULT_PRODUCT_QUANTITY = 5
-BAD_PRODUCT_ID, NOT_ENOUGH_MONEY, BOUGHT, STOCK_SHORTAGE = range(4)
+BAD_PRODUCT_ID, NOT_ENOUGH_MONEY, BOUGHT_RETURNED_CHANGE, STOCK_SHORTAGE, BOUGHT_EXACT_CHANGE, UNABLE_TO_GIVE_CHANGE = range(6)
 MIN_PRODUCT_ID, MAX_PRODUCT_ID = 30, 50
 
 
@@ -15,7 +15,7 @@ class Product:
         self.price = price
 
     def __str__(self) -> str:
-        return f"id: {self.product_id}, name: {self.name}, price: {self.price}"
+        return f"{self.name}, za: {int(self.price/100)}zł {self.price%100}gr"
 
     def __eq__(self, other):
         if not isinstance(other, Product):
@@ -30,14 +30,12 @@ class VendingMachine:
     def __init__(self, products):
         self.coins = {denomination: DEFAULT_COIN_QUANTITY for denomination in DENOMINATIONS}
         self.products = {product: DEFAULT_PRODUCT_QUANTITY for product in products}
-        self.temp_coins = self.get_initial_temp_coins()
+        self.temp_coins = self.get_empty_coins_dict()
+        self.change = self.get_empty_coins_dict()
         self.inserted_money = 0
 
-    def get_initial_temp_coins(self):
-        coins = copy.deepcopy(self.coins)
-        for coin in coins:
-            coins[coin] = 0
-        return coins
+    def get_empty_coins_dict(self):
+        return {denomination: 0 for denomination in DENOMINATIONS}
 
     def add_product(self, product, quantity):
         self.products[product] += quantity
@@ -55,18 +53,43 @@ class VendingMachine:
             return STOCK_SHORTAGE
         if self.inserted_money >= product.price:
             self.products[product] -= 1
-            self.print_products()
             self.inserted_money -= product.price
-            if self.inserted_money > 0:
-                print(f"reszta: {self.inserted_money}")
-                self.inserted_money = 0
-            return BOUGHT
+            change_status = self.get_change()
+            return change_status
         return NOT_ENOUGH_MONEY
 
     def find_product_by_id(self, product_id):
         for product in self.products:
             if product_id == product.product_id:
                 return product
+
+    def get_change(self):
+        if self.inserted_money == 0:
+            return BOUGHT_EXACT_CHANGE
+
+        all_coins = self.get_all_coins()
+        for denomination in sorted(DENOMINATIONS, reverse=True):
+            while denomination <= self.inserted_money and self.inserted_money > 0 and all_coins[denomination] > 0:
+                all_coins[denomination] -= 1
+                self.change[denomination] += 1
+                self.inserted_money -= denomination
+
+        if self.inserted_money > 0:
+            return UNABLE_TO_GIVE_CHANGE
+
+        self.coins = copy.deepcopy(all_coins)
+        return BOUGHT_RETURNED_CHANGE
+
+    def get_all_coins(self):
+        all_coins = copy.deepcopy(self.coins)
+        for denomination in DENOMINATIONS:
+            all_coins[denomination] += self.temp_coins[denomination]
+        return all_coins
+
+    def clear_temporary_coin_values(self):
+        self.inserted_money = 0
+        self.temp_coins = self.get_empty_coins_dict()
+        self.change = self.get_empty_coins_dict()
 
     def print_coins(self):
         for coin, quantity in self.coins.items():
@@ -82,11 +105,6 @@ class VendingMachine:
 
     def insert_coin(self, coin_value):
         self.temp_coins[coin_value] += 1
-        self.print_temp_coins()
         self.inserted_money += coin_value
-
-
-
-
 
 

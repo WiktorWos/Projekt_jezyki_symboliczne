@@ -5,11 +5,11 @@ CANVAS_HEIGHT, CANVAS_WIDTH = 500, 600
 FRAME_BG_COLOR = '#9c978a'
 BORDER_SIZE = 5
 FRAME_COINS_X, FRAME_COINS_Y, FRAME_COINS_WIDTH, FRAME_COINS_HEIGHT = 0.5, 0.05, 0.9, 0.1
-FRAME_VALUE_X, FRAME_VALUE_Y, FRAME_VALUE_WIDTH, FRAME_VALUE_HEIGHT = 0.5, 0.17, 0.9, 0.1
-LABEL_WIDTH, LABEL_HEIGHT = 0.4, 1
-TEXTBOX_X, TEXTBOX_WIDTH, TEXTBOX_HEIGHT = 0.45, 0.3, 1
+FRAME_VALUE_X, FRAME_VALUE_Y, FRAME_VALUE_WIDTH, FRAME_VALUE_HEIGHT = 0.5, 0.17, 0.9, 0.4
+LABEL_WIDTH, LABEL_HEIGHT = 0.48, 1
+TEXTBOX_X, TEXTBOX_Y, TEXTBOX_WIDTH, TEXTBOX_HEIGHT = 0.52, 0.4, 0.3, 0.15
 COIN_BUTTON_INIT_X, COIN_BUTTON_Y, COIN_BUTTON_WIDTH, COIN_BUTTON_HEIGHT = 0.01, 0.25, 0.1, 0.5
-BUY_BUTTON_X, BUY_BUTTON_Y, BUY_BUTTON_WIDTH, BUY_BUTTON_HEIGHT = 0.8, 0.2, 0.1, 0.5
+BUY_BUTTON_X, BUY_BUTTON_Y, BUY_BUTTON_WIDTH, BUY_BUTTON_HEIGHT = 0.83, 0.4, 0.1, 0.15
 
 
 def insert_coin(vending_machine, label, val):
@@ -26,14 +26,31 @@ def buy_product(vending_machine, label, product_id):
     if product_id == '':
         label['text'] = "Wprowadz numer produktu"
     else:
+        result = vending_machine.buy_product(product_id)
         switcher = {
             vm.BAD_PRODUCT_ID: "Podaj numer produktu pomiedzy 30 a 50",
             vm.NOT_ENOUGH_MONEY: "Za malo pieniedzy",
             vm.STOCK_SHORTAGE: "Produkt niedostepny",
-            vm.BOUGHT: f"Kupiles: {vending_machine.find_product_by_id(int(product_id))}"
+            vm.BOUGHT_EXACT_CHANGE: f"Kupiles: {vending_machine.find_product_by_id(int(product_id))}",
+            vm.UNABLE_TO_GIVE_CHANGE:
+                f"Automat nie może wydać reszty.\n {print_returned_coins(vending_machine.temp_coins)}",
+            vm.BOUGHT_RETURNED_CHANGE:
+                f"Wydano resztę.\n {print_returned_coins(vending_machine.change)}"
         }
-        result = vending_machine.buy_product(product_id)
         label['text'] = switcher.get(result, "Invalid result")
+        print(vending_machine.coins)
+        vending_machine.clear_temporary_coin_values()
+
+
+def print_returned_coins(coins):
+    printed_coins = "Zwrócone monety: \n"
+    for key, value in coins.items():
+        if value > 0:
+            if key < 100:
+                printed_coins += f"{key}gr: x{value}\n"
+            else:
+                printed_coins += f"{key/100}zł: x{value}\n"
+    return printed_coins
 
 
 def get_coin_buttons(vending_machine, frame_coins, label):
@@ -82,7 +99,7 @@ def main():
     label.place(relwidth=LABEL_WIDTH, relheight=LABEL_HEIGHT)
 
     textbox = tk.Entry(frame_inserted_value, font=40)
-    textbox.place(relx=TEXTBOX_X, relwidth=TEXTBOX_WIDTH, relheight=TEXTBOX_HEIGHT)
+    textbox.place(relx=TEXTBOX_X, rely=TEXTBOX_Y,relwidth=TEXTBOX_WIDTH, relheight=TEXTBOX_HEIGHT)
 
     coin_buttons = get_coin_buttons(vending_machine, frame_coins, label)
     place_coin_buttons(coin_buttons)
