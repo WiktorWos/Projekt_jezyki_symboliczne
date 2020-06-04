@@ -15,7 +15,7 @@ class Product:
         self.price = price
 
     def __str__(self) -> str:
-        return f"{self.name}, za: {int(self.price/100)}zł {self.price%100}gr"
+        return f"{self.product_id}.{self.name}: {int(self.price/100)}zł {self.price%100}gr"
 
     def __eq__(self, other):
         if not isinstance(other, Product):

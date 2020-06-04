@@ -2,34 +2,45 @@ import vending_machine as vm
 import tkinter as tk
 from tkinter import messagebox
 
-CANVAS_HEIGHT, CANVAS_WIDTH = 500, 600
-FRAME_BG_COLOR = '#9c978a'
+CANVAS_HEIGHT, CANVAS_WIDTH = 600, 800
+ROOT_BG_COLOR = '#c7dcff'
+FRAME_BG_COLOR = '#4d658c'
+LABEL_BG_COLOR = '#9ab2d9'
 BORDER_SIZE = 5
-FRAME_COINS_X, FRAME_COINS_Y, FRAME_COINS_WIDTH, FRAME_COINS_HEIGHT = 0.5, 0.05, 0.9, 0.1
-FRAME_VALUE_X, FRAME_VALUE_Y, FRAME_VALUE_WIDTH, FRAME_VALUE_HEIGHT = 0.5, 0.17, 0.9, 0.4
+FRAME_PRODUCTS_X, FRAME_PRODUCTS_Y, FRAME_PRODUCTS_WIDTH, FRAME_PRODUCTS_HEIGHT = 0.5, 0.05, 0.9, 0.28
+FRAME_COINS_X, FRAME_COINS_Y, FRAME_COINS_WIDTH, FRAME_COINS_HEIGHT = 0.5, 0.35, 0.9, 0.1
+FRAME_VALUE_X, FRAME_VALUE_Y, FRAME_VALUE_WIDTH, FRAME_VALUE_HEIGHT = 0.5, 0.47, 0.9, 0.4
 LABEL_SUMMARY_Y, LABEL_SUMMARY_WIDTH, LABEL_SUMMARY_HEIGHT = 0.12, 0.48, 0.88
+LABEL_PRODUCTS_WIDTH, LABEL_PRODUCTS_HEIGHT = 1, 1
 INSERTED_MONEY_LABEL_WIDTH, INSERTED_MONEY_LABEL_HEIGHT = 0.48, 0.1
 TEXTBOX_X, TEXTBOX_Y, TEXTBOX_WIDTH, TEXTBOX_HEIGHT = 0.52, 0.4, 0.3, 0.15
 COIN_BUTTON_INIT_X, COIN_BUTTON_Y, COIN_BUTTON_WIDTH, COIN_BUTTON_HEIGHT = 0.01, 0.25, 0.1, 0.5
 BUY_BUTTON_X, BUY_BUTTON_Y, BUY_BUTTON_WIDTH, BUY_BUTTON_HEIGHT = 0.83, 0.4, 0.1, 0.15
+PRODUCT_COLUMN_OFFSET = 30
 
 
 class VendingMachineMainView:
     def __init__(self, root):
         self.root = root
+        self.root.configure(background=ROOT_BG_COLOR, height=CANVAS_HEIGHT, width=CANVAS_WIDTH)
         self.products = self.get_products()
         self.vending_machine = vm.VendingMachine(self.products)
 
-        self.canvas = tk.Canvas(root, height=CANVAS_HEIGHT, width=CANVAS_WIDTH)
-        self.canvas.pack()
+        self.frame_product_list = tk.Frame(root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
+        self.frame_product_list.place(relx=FRAME_PRODUCTS_X, rely=FRAME_PRODUCTS_Y,
+                                      relwidth=FRAME_PRODUCTS_WIDTH, relheight=FRAME_PRODUCTS_HEIGHT, anchor='n')
 
         self.frame_coins = tk.Frame(root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
         self.frame_coins.place(relx=FRAME_COINS_X, rely=FRAME_COINS_Y,
-                          relwidth=FRAME_COINS_WIDTH, relheight=FRAME_COINS_HEIGHT, anchor='n')
+                               relwidth=FRAME_COINS_WIDTH, relheight=FRAME_COINS_HEIGHT, anchor='n')
 
         self.frame_inserted_value = tk.Frame(root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
         self.frame_inserted_value.place(relx=FRAME_VALUE_X, rely=FRAME_VALUE_Y,
-                                   relwidth=FRAME_VALUE_WIDTH, relheight=FRAME_VALUE_HEIGHT, anchor='n')
+                                        relwidth=FRAME_VALUE_WIDTH, relheight=FRAME_VALUE_HEIGHT, anchor='n')
+
+        self.label_products = tk.Label(self.frame_product_list, bg=LABEL_BG_COLOR)
+        self.label_products.place(relwidth=LABEL_PRODUCTS_WIDTH, relheight=LABEL_PRODUCTS_HEIGHT)
+        self.display_products()
 
         self.label_summary = tk.Label(self.frame_inserted_value)
         self.label_summary.place(relwidth=LABEL_SUMMARY_WIDTH, relheight=LABEL_SUMMARY_HEIGHT, rely=LABEL_SUMMARY_Y)
@@ -43,9 +54,10 @@ class VendingMachineMainView:
         self.coin_buttons = self.get_coin_buttons()
         self.place_coin_buttons()
 
-        self.button_buy = tk.Button(self.frame_inserted_value, text="buy", bg='grey',
-                               command=lambda: self.buy_product(self.textbox.get()))
-        self.button_buy.place(relx=BUY_BUTTON_X, rely=BUY_BUTTON_Y, relwidth=BUY_BUTTON_WIDTH, relheight=BUY_BUTTON_HEIGHT)
+        self.button_buy = tk.Button(self.frame_inserted_value, text="Wybierz", bg='grey',
+                                    command=lambda: self.buy_product(self.textbox.get()))
+        self.button_buy.place(relx=BUY_BUTTON_X, rely=BUY_BUTTON_Y, relwidth=BUY_BUTTON_WIDTH,
+                              relheight=BUY_BUTTON_HEIGHT)
 
     def insert_coin(self, val):
         self.vending_machine.insert_coin(val)
@@ -114,7 +126,7 @@ class VendingMachineMainView:
                 buttons.append(tk.Button(self.frame_coins, text=f"{denomination}gr",
                                          bg='grey', command=lambda d=denomination: self.insert_coin(d)))
             else:
-                buttons.append(tk.Button(self.frame_coins, text=f"{denomination / 100}zl",
+                buttons.append(tk.Button(self.frame_coins, text=f"{int(denomination / 100)}zl",
                                          bg='grey', command=lambda d=denomination: self.insert_coin(d)))
         return buttons
 
@@ -127,8 +139,38 @@ class VendingMachineMainView:
     def get_products(self):
         return [
             vm.Product(30, "Coca Cola", 220),
-            vm.Product(31, "Fanta", 210)
+            vm.Product(31, "Fanta", 210),
+            vm.Product(32, "Coca Cola", 220),
+            vm.Product(33, "Fanta", 210),
+            vm.Product(34, "Coca Cola", 220),
+            vm.Product(35, "Fanta", 210),
+            vm.Product(36, "Coca Cola", 220),
+            vm.Product(37, "Fanta", 210),
+            vm.Product(38, "Coca Cola", 220),
+            vm.Product(39, "Fanta", 210),
+            vm.Product(40, "Coca Cola", 220),
+            vm.Product(41, "Fanta", 210),
+            vm.Product(42, "Coca Cola", 220),
+            vm.Product(43, "Fanta", 210),
+            vm.Product(44, "Coca Cola", 220),
+            vm.Product(45, "Fanta", 210),
+            vm.Product(46, "Coca Cola", 220),
+            vm.Product(47, "Fanta", 210),
+            vm.Product(48, "Coca Cola", 220),
+            vm.Product(49, "Fanta", 210),
+            vm.Product(50, "Coca Cola", 220)
         ]
+
+    def display_products(self):
+        max_str_length = max([len(str(product)) for product in self.products])
+        for index, product in enumerate(self.products):
+            format_width = max_str_length - len(str(product)) + PRODUCT_COLUMN_OFFSET
+            self.label_products['text'] += '{:{width}}'.format(str(product), width=format_width)
+            self.product_list_break_line(index)
+
+    def product_list_break_line(self, index):
+        if index > 1 and (index + 1) % 3 == 0:
+            self.label_products['text'] += "\n"
 
 
 def main():
