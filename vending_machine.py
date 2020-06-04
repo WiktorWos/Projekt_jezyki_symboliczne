@@ -47,6 +47,8 @@ class VendingMachine:
 
     def buy_product(self, product_id):
         product_id = int(product_id)
+        if product_id > MAX_PRODUCT_ID or product_id < MIN_PRODUCT_ID:
+            return BAD_PRODUCT_ID
         product = self.find_product_by_id(product_id)
         product_quantity = self.products[product]
         if product_quantity == 0:

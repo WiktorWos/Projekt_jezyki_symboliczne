@@ -1,5 +1,6 @@
 import vending_machine as vm
 import tkinter as tk
+from tkinter import messagebox
 
 CANVAS_HEIGHT, CANVAS_WIDTH = 500, 600
 FRAME_BG_COLOR = '#9c978a'
@@ -27,19 +28,27 @@ def buy_product(vending_machine, label, product_id):
         label['text'] = "Wprowadz numer produktu"
     else:
         result = vending_machine.buy_product(product_id)
-        switcher = {
-            vm.BAD_PRODUCT_ID: "Podaj numer produktu pomiedzy 30 a 50",
-            vm.NOT_ENOUGH_MONEY: "Za malo pieniedzy",
-            vm.STOCK_SHORTAGE: "Produkt niedostepny",
-            vm.BOUGHT_EXACT_CHANGE: f"Kupiles: {vending_machine.find_product_by_id(int(product_id))}",
-            vm.UNABLE_TO_GIVE_CHANGE:
-                f"Automat nie może wydać reszty.\n {print_returned_coins(vending_machine.temp_coins)}",
-            vm.BOUGHT_RETURNED_CHANGE:
-                f"Wydano resztę.\n {print_returned_coins(vending_machine.change)}"
-        }
-        label['text'] = switcher.get(result, "Invalid result")
-        print(vending_machine.coins)
-        vending_machine.clear_temporary_coin_values()
+        displayed_text = get_displayed_text(result, vending_machine, product_id)
+        if result in (vm.BAD_PRODUCT_ID, vm.NOT_ENOUGH_MONEY, vm.STOCK_SHORTAGE):
+            show_retry_dialog_window(label, vending_machine, displayed_text)
+        else:
+            show_transaction_summary(label, vending_machine, displayed_text)
+
+
+def get_displayed_text(result, vending_machine, product_id):
+    switcher = {
+        vm.BAD_PRODUCT_ID: "Podaj numer produktu pomiedzy 30 a 50.",
+        vm.NOT_ENOUGH_MONEY: "Za malo pieniedzy.",
+        vm.STOCK_SHORTAGE: "Produkt niedostepny.",
+        vm.BOUGHT_EXACT_CHANGE: f"Kupiles: {vending_machine.find_product_by_id(int(product_id))}",
+        vm.UNABLE_TO_GIVE_CHANGE:
+            f"Automat nie może wydać reszty.\n"
+            f"W celu zakupu proszę umieścić wyliczoną kwotę\n {print_returned_coins(vending_machine.temp_coins)}",
+        vm.BOUGHT_RETURNED_CHANGE:
+            f"Wydano resztę.\n {print_returned_coins(vending_machine.change)}"
+    }
+    displayed_text = switcher.get(result, "Invalid result")
+    return displayed_text
 
 
 def print_returned_coins(coins):
@@ -51,6 +60,18 @@ def print_returned_coins(coins):
             else:
                 printed_coins += f"{key/100}zł: x{value}\n"
     return printed_coins
+
+
+def show_retry_dialog_window(label, vending_machine, displayed_text):
+    answer = messagebox.askyesno("Zakup nie powiódł się", f"{displayed_text}\n\nSpróbować ponownie?")
+    if not answer:
+        label['text'] = print_returned_coins(vending_machine.temp_coins)
+        vending_machine.clear_temporary_coin_values()
+
+
+def show_transaction_summary(label, vending_machine, displayed_text):
+    label['text'] = displayed_text
+    vending_machine.clear_temporary_coin_values()
 
 
 def get_coin_buttons(vending_machine, frame_coins, label):
