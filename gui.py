@@ -10,12 +10,16 @@ BORDER_SIZE = 5
 FRAME_PRODUCTS_X, FRAME_PRODUCTS_Y, FRAME_PRODUCTS_WIDTH, FRAME_PRODUCTS_HEIGHT = 0.5, 0.05, 0.9, 0.28
 FRAME_COINS_X, FRAME_COINS_Y, FRAME_COINS_WIDTH, FRAME_COINS_HEIGHT = 0.5, 0.35, 0.9, 0.1
 FRAME_VALUE_X, FRAME_VALUE_Y, FRAME_VALUE_WIDTH, FRAME_VALUE_HEIGHT = 0.5, 0.47, 0.9, 0.4
-LABEL_SUMMARY_Y, LABEL_SUMMARY_WIDTH, LABEL_SUMMARY_HEIGHT = 0.12, 0.48, 0.88
+LABEL_SUMMARY_Y, LABEL_SUMMARY_WIDTH, LABEL_SUMMARY_HEIGHT = 0, 0.48, 1
 LABEL_PRODUCTS_WIDTH, LABEL_PRODUCTS_HEIGHT = 1, 1
 INSERTED_MONEY_LABEL_X, INSERTED_MONEY_LABEL_Y, INSERTED_MONEY_LABEL_WIDTH, INSERTED_MONEY_LABEL_HEIGHT = 0.01, 0.25, 0.17, 0.5
 TEXTBOX_X, TEXTBOX_Y, TEXTBOX_WIDTH, TEXTBOX_HEIGHT = 0.52, 0.4, 0.3, 0.15
 COIN_BUTTON_INIT_X, COIN_BUTTON_Y, COIN_BUTTON_WIDTH, COIN_BUTTON_HEIGHT = 0.19, 0.25, 0.08, 0.5
-BUY_BUTTON_X, BUY_BUTTON_Y, BUY_BUTTON_WIDTH, BUY_BUTTON_HEIGHT = 0.83, 0.4, 0.1, 0.15
+NUM_BUTTON_INIT_X, NUM_BUTTON_INIT_Y, NUM_BUTTON_WIDTH, NUM_BUTTON_HEIGHT = 0.61, 0.18, 0.09, 0.20
+LABEL_PRODUCT_ID_X, LABEL_PRODUCT_ID_Y, LABEL_PRODUCT_ID_WIDTH, LABEL_PRODUCT_ID_HEIGHT = 0.61, 0.01, 0.27, 0.15
+DEFAULT_LABEL_PRODUCT_ID_TEXT = "Wprowadź numer produktu"
+BUY_BUTTON_X, BUY_BUTTON_Y, BUY_BUTTON_WIDTH, BUY_BUTTON_HEIGHT = 0.70, 0.78, 0.09, 0.20
+CANCEL_BUTTON_X, CANCEL_BUTTON_Y, CANCEL_BUTTON_WIDTH, CANCEL_BUTTON_HEIGHT = 0.79, 0.78, 0.09, 0.20
 PRODUCT_COLUMN_OFFSET = 30
 
 
@@ -24,6 +28,7 @@ class VendingMachineMainView:
         self.root = root
         self.products = products
         self.vending_machine_service = vending_machine_service
+        self.chosen_product_id = ""
 
         self.frame_coins = self.create_frame_coins(root)
         self.frame_inserted_value = self.create_frame_inserted_value(root)
@@ -62,18 +67,18 @@ class VendingMachineMainView:
         return label_inserted_money
 
     def init_frame_coins_content(self):
-        self.init_coin_buttons(self.frame_coins)
+        self.init_coin_buttons()
 
-    def init_coin_buttons(self, frame_coins):
+    def init_coin_buttons(self):
         buttons = []
         for denomination in vm.DENOMINATIONS:
             if denomination < 100:
-                buttons.append(tk.Button(frame_coins, text=f"{denomination}gr",
+                buttons.append(tk.Button(self.frame_coins, text=f"{denomination}gr",
                                          bg='grey',
                                          command=lambda d=denomination:
                                          self.vending_machine_service.insert_coin(d, self.label_inserted_money)))
             else:
-                buttons.append(tk.Button(frame_coins, text=f"{int(denomination / 100)}zl",
+                buttons.append(tk.Button(self.frame_coins, text=f"{int(denomination / 100)}zl",
                                          bg='grey',
                                          command=lambda d=denomination:
                                          self.vending_machine_service.insert_coin(d, self.label_inserted_money)))
@@ -93,8 +98,16 @@ class VendingMachineMainView:
 
     def init_frame_inserted_value_content(self):
         label_summary = self.create_label_summary()
-        textbox = self.init_textbox()
-        self.init_buy_button(textbox, label_summary)
+        label_product_id = self.create_label_product_id()
+        self.init_buy_button(label_summary, label_product_id)
+        self.init_product_num_buttons(label_product_id)
+        self.init_cancel_button(label_summary, label_product_id)
+
+    def create_label_product_id(self):
+        label_product_id = tk.Label(self.frame_inserted_value, anchor="c", text=DEFAULT_LABEL_PRODUCT_ID_TEXT)
+        label_product_id.place(relx=LABEL_PRODUCT_ID_X, rely=LABEL_PRODUCT_ID_Y,
+                               relwidth=LABEL_PRODUCT_ID_WIDTH, relheight=LABEL_PRODUCT_ID_HEIGHT)
+        return label_product_id
 
     def create_label_summary(self):
         label_summary = tk.Label(self.frame_inserted_value)
@@ -106,12 +119,58 @@ class VendingMachineMainView:
         textbox.place(relx=TEXTBOX_X, rely=TEXTBOX_Y, relwidth=TEXTBOX_WIDTH, relheight=TEXTBOX_HEIGHT)
         return textbox
 
-    def init_buy_button(self, textbox, label_summary):
-        button_buy = tk.Button(self.frame_inserted_value, text="Wybierz", bg='grey',
-                               command=lambda: self.vending_machine_service.buy_product(
-                                               textbox.get(), label_summary, self.label_inserted_money))
+    def init_buy_button(self, label_summary, label_product_id):
+        button_buy = tk.Button(self.frame_inserted_value, text="KUP", bg='grey',
+                               command=lambda: self.buy_product_lambda(label_summary, label_product_id))
         button_buy.place(relx=BUY_BUTTON_X, rely=BUY_BUTTON_Y, relwidth=BUY_BUTTON_WIDTH,
                          relheight=BUY_BUTTON_HEIGHT)
+
+    def init_cancel_button(self, label_summary, label_product_id):
+        button_cancel = tk.Button(self.frame_inserted_value, text="ANULUJ", bg='grey',
+                                  command=lambda:
+                                  self.cancel_button_lambda(label_summary, label_product_id))
+        button_cancel.place(relx=CANCEL_BUTTON_X, rely=CANCEL_BUTTON_Y, relwidth=CANCEL_BUTTON_WIDTH,
+                            relheight=CANCEL_BUTTON_HEIGHT)
+
+    def cancel_button_lambda(self, label_summary, label_product_id):
+        self.vending_machine_service.cancel_transaction(label_summary, self.label_inserted_money)
+        self.chosen_product_id = ''
+        label_product_id['text'] = DEFAULT_LABEL_PRODUCT_ID_TEXT
+
+    def buy_product_lambda(self, label_summary, label_product_id):
+        self.vending_machine_service.buy_product(self.chosen_product_id, label_summary, self.label_inserted_money)
+        self.chosen_product_id = ""
+        label_product_id['text'] = DEFAULT_LABEL_PRODUCT_ID_TEXT
+
+    def init_product_num_buttons(self, label_product_id):
+        buttons = []
+        for num in range(0, 10):
+            button = tk.Button(self.frame_inserted_value, text=f"{num}",
+                               bg='grey',
+                               command=lambda n=num: self.update_chosen_product_id(n, label_product_id))
+            if num == 0:
+                buttons.insert(9, button)
+            else:
+                buttons.insert(num-1, button)
+        self.place_product_num_buttons(buttons)
+
+    @staticmethod
+    def place_product_num_buttons(buttons):
+        relx = NUM_BUTTON_INIT_X
+        rely = NUM_BUTTON_INIT_Y
+        for i, button in enumerate(buttons):
+            button.place(relx=relx, rely=rely, relwidth=NUM_BUTTON_WIDTH, relheight=NUM_BUTTON_HEIGHT)
+            relx += 0.09
+            if (i+1) % 3 == 0:
+                rely += NUM_BUTTON_HEIGHT
+                relx = NUM_BUTTON_INIT_X
+
+    def update_chosen_product_id(self, num, label_product_id):
+        if len(self.chosen_product_id) == 2:
+            self.chosen_product_id = ''
+        self.chosen_product_id += str(num)
+        label_product_id['text'] = self.chosen_product_id
+        print(self.chosen_product_id)
 
     def display_products(self, label_products):
         max_str_length = max([len(str(product)) for product in self.products])
@@ -183,9 +242,12 @@ class VendingMachineService:
     def show_retry_dialog_window(self, displayed_text, label_summary, label_inserted_money):
         answer = messagebox.askyesno("Zakup nie powiódł się", f"{displayed_text}\n\nSpróbować ponownie?")
         if not answer:
-            label_summary['text'] = self.print_returned_coins(self.vending_machine.temp_coins)
-            self.vending_machine.clear_temporary_coin_values()
-            self.print_inserted_money(label_inserted_money)
+            self.cancel_transaction(label_summary, label_inserted_money)
+
+    def cancel_transaction(self, label_summary, label_inserted_money):
+        label_summary['text'] = self.print_returned_coins(self.vending_machine.temp_coins)
+        self.vending_machine.clear_temporary_coin_values()
+        self.print_inserted_money(label_inserted_money)
 
     def show_transaction_summary(self, displayed_text, label_summary, label_inserted_money):
         label_summary['text'] = displayed_text
