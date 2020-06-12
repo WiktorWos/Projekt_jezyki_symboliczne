@@ -2,7 +2,7 @@ import vending_machine as vm
 import tkinter as tk
 from tkinter import messagebox
 
-CANVAS_HEIGHT, CANVAS_WIDTH = 600, 800
+ROOT_HEIGHT, ROOT_WIDTH = 600, 800
 ROOT_BG_COLOR = '#c7dcff'
 FRAME_BG_COLOR = '#4d658c'
 LABEL_BG_COLOR = '#9ab2d9'
@@ -20,10 +20,10 @@ PRODUCT_COLUMN_OFFSET = 30
 
 
 class VendingMachineMainView:
-    def __init__(self, root, vending_machine, products):
+    def __init__(self, root, vending_machine_service, products):
         self.root = root
         self.products = products
-        self.vending_machine = vending_machine
+        self.vending_machine_service = vending_machine_service
 
         self.frame_coins = self.create_frame_coins(root)
         self.frame_inserted_value = self.create_frame_inserted_value(root)
@@ -70,12 +70,21 @@ class VendingMachineMainView:
             if denomination < 100:
                 buttons.append(tk.Button(frame_coins, text=f"{denomination}gr",
                                          bg='grey',
-                                         command=lambda d=denomination: self.insert_coin(d)))
+                                         command=lambda d=denomination:
+                                         self.vending_machine_service.insert_coin(d, self.label_inserted_money)))
             else:
                 buttons.append(tk.Button(frame_coins, text=f"{int(denomination / 100)}zl",
                                          bg='grey',
-                                         command=lambda d=denomination: self.insert_coin(d)))
+                                         command=lambda d=denomination:
+                                         self.vending_machine_service.insert_coin(d, self.label_inserted_money)))
         self.place_coin_buttons(buttons)
+
+    @staticmethod
+    def place_coin_buttons(buttons):
+        relx = COIN_BUTTON_INIT_X
+        for button in buttons:
+            button.place(relx=relx, rely=COIN_BUTTON_Y, relwidth=COIN_BUTTON_WIDTH, relheight=COIN_BUTTON_HEIGHT)
+            relx += 0.09
 
     def init_frame_product_list_content(self):
         label_products = tk.Label(self.frame_product_list, bg=LABEL_BG_COLOR)
@@ -99,32 +108,50 @@ class VendingMachineMainView:
 
     def init_buy_button(self, textbox, label_summary):
         button_buy = tk.Button(self.frame_inserted_value, text="Wybierz", bg='grey',
-                               command=lambda: self.buy_product(textbox.get(), label_summary))
+                               command=lambda: self.vending_machine_service.buy_product(
+                                               textbox.get(), label_summary, self.label_inserted_money))
         button_buy.place(relx=BUY_BUTTON_X, rely=BUY_BUTTON_Y, relwidth=BUY_BUTTON_WIDTH,
                          relheight=BUY_BUTTON_HEIGHT)
 
-    def buy_product(self, product_id, label_summary):
+    def display_products(self, label_products):
+        max_str_length = max([len(str(product)) for product in self.products])
+        for index, product in enumerate(self.products):
+            format_width = max_str_length - len(str(product)) + PRODUCT_COLUMN_OFFSET
+            label_products['text'] += '{:{width}}'.format(str(product), width=format_width)
+            self.product_list_break_line(index, label_products)
+
+    @staticmethod
+    def product_list_break_line(index, label_products):
+        if index > 1 and (index + 1) % 3 == 0:
+            label_products['text'] += "\n"
+
+
+class VendingMachineService:
+    def __init__(self, vending_machine):
+        self.vending_machine = vending_machine
+
+    def buy_product(self, product_id, label_summary, label_inserted_money):
         if product_id == '':
             label_summary['text'] = "Wprowadź numer produktu"
         else:
             result = self.vending_machine.buy_product(product_id)
             displayed_text = self.get_displayed_text(result, product_id)
             if result in (vm.BAD_PRODUCT_ID, vm.NOT_ENOUGH_MONEY, vm.STOCK_SHORTAGE):
-                self.show_retry_dialog_window(displayed_text, label_summary)
+                self.show_retry_dialog_window(displayed_text, label_summary, label_inserted_money)
             else:
-                self.show_transaction_summary(displayed_text, label_summary)
+                self.show_transaction_summary(displayed_text, label_summary, label_inserted_money)
 
-    def insert_coin(self, val):
+    def insert_coin(self, val, label_inserted_money):
         self.vending_machine.insert_coin(val)
-        self.print_inserted_money()
+        self.print_inserted_money(label_inserted_money)
 
-    def print_inserted_money(self):
+    def print_inserted_money(self, label_inserted_money):
         if self.vending_machine.inserted_money < 100:
-            self.label_inserted_money['text'] = f"Wpłaciles: {self.vending_machine.inserted_money} gr"
+            label_inserted_money['text'] = f"Wpłaciles: {self.vending_machine.inserted_money} gr"
         else:
             zl = int(self.vending_machine.inserted_money / 100)
             gr = int(self.vending_machine.inserted_money % 100)
-            self.label_inserted_money['text'] = f"Wpłaciles: {zl} zł {gr} gr"
+            label_inserted_money['text'] = f"Wpłaciles: {zl} zł {gr} gr"
 
     def get_displayed_text(self, result, product_id):
         switcher = {
@@ -153,40 +180,22 @@ class VendingMachineMainView:
                     printed_coins += f"{key/100}zł: x{value}\n"
         return printed_coins
 
-    def show_retry_dialog_window(self, displayed_text, label_summary):
+    def show_retry_dialog_window(self, displayed_text, label_summary, label_inserted_money):
         answer = messagebox.askyesno("Zakup nie powiódł się", f"{displayed_text}\n\nSpróbować ponownie?")
         if not answer:
             label_summary['text'] = self.print_returned_coins(self.vending_machine.temp_coins)
             self.vending_machine.clear_temporary_coin_values()
-            self.print_inserted_money()
+            self.print_inserted_money(label_inserted_money)
 
-    def show_transaction_summary(self, displayed_text, label_summary):
+    def show_transaction_summary(self, displayed_text, label_summary, label_inserted_money):
         label_summary['text'] = displayed_text
         self.vending_machine.clear_temporary_coin_values()
-        self.print_inserted_money()
-
-    @staticmethod
-    def place_coin_buttons(buttons):
-        relx = COIN_BUTTON_INIT_X
-        for button in buttons:
-            button.place(relx=relx, rely=COIN_BUTTON_Y, relwidth=COIN_BUTTON_WIDTH, relheight=COIN_BUTTON_HEIGHT)
-            relx += 0.09
-
-    def display_products(self, label_products):
-        max_str_length = max([len(str(product)) for product in self.products])
-        for index, product in enumerate(self.products):
-            format_width = max_str_length - len(str(product)) + PRODUCT_COLUMN_OFFSET
-            label_products['text'] += '{:{width}}'.format(str(product), width=format_width)
-            self.product_list_break_line(index, label_products)
-    @staticmethod
-    def product_list_break_line(index, label_products):
-        if index > 1 and (index + 1) % 3 == 0:
-            label_products['text'] += "\n"
+        self.print_inserted_money(label_inserted_money)
 
 
 def main():
     root = tk.Tk()
-    root.configure(background=ROOT_BG_COLOR, height=CANVAS_HEIGHT, width=CANVAS_WIDTH)
+    root.configure(background=ROOT_BG_COLOR, height=ROOT_HEIGHT, width=ROOT_WIDTH)
     products = [
             vm.Product(30, "Coca Cola", 220),
             vm.Product(31, "Fanta", 210),
@@ -211,7 +220,8 @@ def main():
             vm.Product(50, "Coca Cola", 220)
         ]
     vending_machine = vm.VendingMachine(products)
-    VendingMachineMainView(root, vending_machine, products)
+    vending_machine_service = VendingMachineService(vending_machine)
+    VendingMachineMainView(root, vending_machine_service, products)
     root.mainloop()
 
 
