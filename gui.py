@@ -167,7 +167,6 @@ class VendingMachineMainView:
             self.chosen_product_id = ''
         self.chosen_product_id += str(num)
         label_product_id['text'] = self.chosen_product_id
-        print(self.chosen_product_id)
 
     def display_products(self, label_products):
         max_str_length = max([len(str(product)) for product in self.products])
@@ -187,7 +186,7 @@ class VendingMachineService:
         self.vending_machine = vending_machine
 
     def buy_product(self, product_id, label_summary, label_inserted_money):
-        if product_id == '':
+        if not product_id:
             label_summary['text'] = "Wprowadź numer produktu"
         else:
             result = self.vending_machine.buy_product(product_id)
@@ -244,12 +243,12 @@ class VendingMachineService:
 
     def cancel_transaction(self, label_summary, label_inserted_money):
         label_summary['text'] = self.print_returned_coins(self.vending_machine.temp_coins)
-        self.vending_machine.clear_temporary_coin_values()
+        self.vending_machine.cancel_transaction()
         self.print_inserted_money(label_inserted_money)
 
     def show_transaction_summary(self, displayed_text, label_summary, label_inserted_money):
         label_summary['text'] = displayed_text
-        self.vending_machine.clear_temporary_coin_values()
+        self.vending_machine.cancel_transaction()
         self.print_inserted_money(label_inserted_money)
 
 

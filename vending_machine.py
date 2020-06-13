@@ -35,7 +35,8 @@ class VendingMachine:
         self.change = self.get_empty_coins_dict()
         self.inserted_money = 0
 
-    def get_empty_coins_dict(self):
+    @staticmethod
+    def get_empty_coins_dict():
         return {denomination: 0 for denomination in DENOMINATIONS}
 
     def add_product(self, product, quantity):
@@ -89,7 +90,7 @@ class VendingMachine:
             all_coins[denomination] += self.temp_coins[denomination]
         return all_coins
 
-    def clear_temporary_coin_values(self):
+    def cancel_transaction(self):
         self.inserted_money = 0
         self.temp_coins = self.get_empty_coins_dict()
         self.change = self.get_empty_coins_dict()
