@@ -1,9 +1,12 @@
+"""This module is responsible for testing vending_machine.py"""
+
 import unittest
 import vending_machine as vm
 
 
 class VendingMachineTest(unittest.TestCase):
     def setUp(self):
+        """This class tests VendingMachine class"""
         self.products = self.get_products()
         self.vending_machine = vm.VendingMachine(self.products)
 

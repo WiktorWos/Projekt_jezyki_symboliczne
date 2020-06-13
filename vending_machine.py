@@ -1,3 +1,5 @@
+"""This module is responsible for vending machine backend"""
+
 import copy
 
 
@@ -11,6 +13,13 @@ PLN_1 = 100
 
 class Product:
     def __init__(self, product_id, name, price):
+        """
+        Product model class.
+
+        :param product_id: int between 30 and 50
+        :param name: str product name
+        :param price: int product price in gr
+        """
         self.product_id = product_id
         self.name = name
         self.price = price
@@ -29,6 +38,11 @@ class Product:
 
 class VendingMachine:
     def __init__(self, products):
+        """
+        This class is responsible for vending machine logic.
+
+        :param products: list of products
+        """
         self.coins = {denomination: DEFAULT_COIN_QUANTITY for denomination in DENOMINATIONS}
         self.products = {product: DEFAULT_PRODUCT_QUANTITY for product in products}
         self.temp_coins = self.get_empty_coins_dict()
@@ -41,13 +55,17 @@ class VendingMachine:
 
     def add_product(self, product, quantity):
         self.products[product] += quantity
-        print(f"added product: {product}")
 
     def add_coin(self, coin_value, quantity):
         self.coins[coin_value] += quantity
-        print(self.coins[coin_value])
 
     def buy_product(self, product_id):
+        """
+        Method is responsible for buying mechanism.
+
+        :param product_id: int chosen_product_id
+        :return: one of 6 defined constants depending on transaction result
+        """
         product_id = int(product_id)
         if product_id > MAX_PRODUCT_ID or product_id < MIN_PRODUCT_ID:
             return BAD_PRODUCT_ID
@@ -63,11 +81,20 @@ class VendingMachine:
         return NOT_ENOUGH_MONEY
 
     def find_product_by_id(self, product_id):
+        """Returns product with given id"""
         for product in self.products:
             if product_id == product.product_id:
                 return product
 
     def get_change(self):
+        """
+            Method is responsible for giving change.
+
+            Method is called in buying process when inserted_money - product_price >=0.
+            It provides giving change algorithm that goal is to use as least coins as possible.
+
+            :return: one of 3 defined constants depending on transaction result
+        """
         if self.inserted_money == 0:
             return BOUGHT_EXACT_CHANGE
 
@@ -85,12 +112,14 @@ class VendingMachine:
         return BOUGHT_RETURNED_CHANGE
 
     def get_all_coins(self):
+        """Returns all coins that are in the vending machine"""
         all_coins = copy.deepcopy(self.coins)
         for denomination in DENOMINATIONS:
             all_coins[denomination] += self.temp_coins[denomination]
         return all_coins
 
     def cancel_transaction(self):
+        """Cancels transaction, temporary values are reset"""
         self.inserted_money = 0
         self.temp_coins = self.get_empty_coins_dict()
         self.change = self.get_empty_coins_dict()

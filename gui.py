@@ -1,3 +1,4 @@
+"""This module is responsible for vending machine gui."""
 import vending_machine as vm
 import tkinter as tk
 from tkinter import messagebox
@@ -28,42 +29,50 @@ MAX_PRODUCT_ID_LEN = 2
 
 class VendingMachineMainView:
     def __init__(self, root, vending_machine_service, products):
+        """
+        This class is responsible for initialising main vending machine view elements.
+
+        :param root: tkinter root
+        :param vending_machine_service: VendingMachineService object
+        :param products: given vending machine product list
+        """
         self.root = root
         self.products = products
         self.vending_machine_service = vending_machine_service
         self.chosen_product_id = ""
 
-        self.frame_coins = self.create_frame_coins(root)
-        self.frame_inserted_value = self.create_frame_inserted_value(root)
-        self.frame_product_list = self.create_frame_product_list(root)
+        self.frame_coins = self.create_frame_coins()
+        self.frame_inserted_value = self.create_frame_inserted_value()
+        self.frame_product_list = self.create_frame_product_list()
         self.label_inserted_money = self.create_label_inserted_money()
 
         self.init_frame_coins_content()
         self.init_frame_product_list_content()
         self.init_frame_inserted_value_content()
 
-    @staticmethod
-    def create_frame_coins(root):
-        frame_coins = tk.Frame(root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
+    def create_frame_coins(self):
+        """Creates and places frame where are located coin buttons and inserted money label."""
+        frame_coins = tk.Frame(self.root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
         frame_coins.place(relx=FRAME_COINS_X, rely=FRAME_COINS_Y,
                           relwidth=FRAME_COINS_WIDTH, relheight=FRAME_COINS_HEIGHT, anchor='n')
         return frame_coins
 
-    @staticmethod
-    def create_frame_inserted_value(root):
-        frame_inserted_value = tk.Frame(root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
+    def create_frame_inserted_value(self):
+        """Creates and places frame where are located num buttons to provide product_id and summary label."""
+        frame_inserted_value = tk.Frame(self.root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
         frame_inserted_value.place(relx=FRAME_VALUE_X, rely=FRAME_VALUE_Y,
                                    relwidth=FRAME_VALUE_WIDTH, relheight=FRAME_VALUE_HEIGHT, anchor='n')
         return frame_inserted_value
 
-    @staticmethod
-    def create_frame_product_list(root):
-        frame_product_list = tk.Frame(root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
+    def create_frame_product_list(self):
+        """Creates and places frame where is located product list."""
+        frame_product_list = tk.Frame(self.root, bg=FRAME_BG_COLOR, bd=BORDER_SIZE)
         frame_product_list.place(relx=FRAME_PRODUCTS_X, rely=FRAME_PRODUCTS_Y,
                                  relwidth=FRAME_PRODUCTS_WIDTH, relheight=FRAME_PRODUCTS_HEIGHT, anchor='n')
         return frame_product_list
 
     def create_label_inserted_money(self):
+        """Creates and places label that displays inserted coins value."""
         label_inserted_money = tk.Label(self.frame_coins, text='Wpłaciłeś: 0zł', anchor="w")
         label_inserted_money.place(relx=INSERTED_MONEY_LABEL_X, rely=INSERTED_MONEY_LABEL_Y,
                                    relwidth=INSERTED_MONEY_LABEL_WIDTH, relheight=INSERTED_MONEY_LABEL_HEIGHT)
@@ -73,6 +82,7 @@ class VendingMachineMainView:
         self.init_coin_buttons()
 
     def init_coin_buttons(self):
+        """Initialises coin buttons."""
         buttons = []
         for denomination in vm.DENOMINATIONS:
             if denomination < PLN_1:
@@ -88,17 +98,20 @@ class VendingMachineMainView:
 
     @staticmethod
     def place_coin_buttons(buttons):
+        """Places coin buttons."""
         relx = COIN_BUTTON_INIT_X
         for button in buttons:
             button.place(relx=relx, rely=COIN_BUTTON_Y, relwidth=COIN_BUTTON_WIDTH, relheight=COIN_BUTTON_HEIGHT)
             relx += COIN_BUTTON_WIDTH + COIN_BUTTON_SPACE
 
     def init_frame_product_list_content(self):
+        """Initialises frame product list content."""
         label_products = tk.Label(self.frame_product_list, bg=LABEL_BG_COLOR)
         label_products.place(relwidth=LABEL_PRODUCTS_WIDTH, relheight=LABEL_PRODUCTS_HEIGHT)
         self.display_products(label_products)
 
     def init_frame_inserted_value_content(self):
+        """Initialises frame inserted value list content."""
         label_summary = self.create_label_summary()
         label_product_id = self.create_label_product_id()
         self.init_buy_button(label_summary, label_product_id)
@@ -106,23 +119,27 @@ class VendingMachineMainView:
         self.init_cancel_button(label_summary, label_product_id)
 
     def create_label_product_id(self):
+        """Returns label that displays product_id."""
         label_product_id = tk.Label(self.frame_inserted_value, anchor="c", text=DEFAULT_LABEL_PRODUCT_ID_TEXT)
         label_product_id.place(relx=LABEL_PRODUCT_ID_X, rely=LABEL_PRODUCT_ID_Y,
                                relwidth=LABEL_PRODUCT_ID_WIDTH, relheight=LABEL_PRODUCT_ID_HEIGHT)
         return label_product_id
 
     def create_label_summary(self):
+        """Returns label that displays summary."""
         label_summary = tk.Label(self.frame_inserted_value)
         label_summary.place(relwidth=LABEL_SUMMARY_WIDTH, relheight=LABEL_SUMMARY_HEIGHT, rely=LABEL_SUMMARY_Y)
         return label_summary
 
     def init_buy_button(self, label_summary, label_product_id):
+        """Initialises buy button."""
         button_buy = tk.Button(self.frame_inserted_value, text="KUP", bg='grey',
                                command=lambda: self.buy_product_lambda(label_summary, label_product_id))
         button_buy.place(relx=BUY_BUTTON_X, rely=BUY_BUTTON_Y, relwidth=BUY_BUTTON_WIDTH,
                          relheight=BUY_BUTTON_HEIGHT)
 
     def init_cancel_button(self, label_summary, label_product_id):
+        """Initialises cancel button."""
         button_cancel = tk.Button(self.frame_inserted_value, text="ANULUJ", bg='grey',
                                   command=lambda:
                                   self.cancel_button_lambda(label_summary, label_product_id))
@@ -130,16 +147,19 @@ class VendingMachineMainView:
                             relheight=CANCEL_BUTTON_HEIGHT)
 
     def cancel_button_lambda(self, label_summary, label_product_id):
+        """Cancels transaction when button cancel is clicked"."""
         self.vending_machine_service.cancel_transaction(label_summary, self.label_inserted_money)
         self.chosen_product_id = ''
         label_product_id['text'] = DEFAULT_LABEL_PRODUCT_ID_TEXT
 
     def buy_product_lambda(self, label_summary, label_product_id):
+        """Buys product when button buy is clicked"""
         self.vending_machine_service.buy_product(self.chosen_product_id, label_summary, self.label_inserted_money)
         self.chosen_product_id = ""
         label_product_id['text'] = DEFAULT_LABEL_PRODUCT_ID_TEXT
 
     def init_product_num_buttons(self, label_product_id):
+        """Initialises coin buttons."""
         buttons = []
         for num in range(NUM_BUTTONS_AMOUNT):
             button = tk.Button(self.frame_inserted_value, text=f"{num}",
@@ -153,6 +173,7 @@ class VendingMachineMainView:
 
     @staticmethod
     def place_product_num_buttons(buttons):
+        """Places coin buttons."""
         relx = NUM_BUTTON_INIT_X
         rely = NUM_BUTTON_INIT_Y
         for i, button in enumerate(buttons):
@@ -163,12 +184,14 @@ class VendingMachineMainView:
                 relx = NUM_BUTTON_INIT_X
 
     def update_chosen_product_id(self, num, label_product_id):
+        """Updates chosen product_id when num button is clicked, accepts only 2 digits."""
         if len(self.chosen_product_id) == MAX_PRODUCT_ID_LEN:
             self.chosen_product_id = ''
         self.chosen_product_id += str(num)
         label_product_id['text'] = self.chosen_product_id
 
     def display_products(self, label_products):
+        """Displays products."""
         max_str_length = max([len(str(product)) for product in self.products])
         for index, product in enumerate(self.products):
             format_width = max_str_length - len(str(product)) + PRODUCT_COLUMN_OFFSET
@@ -183,9 +206,23 @@ class VendingMachineMainView:
 
 class VendingMachineService:
     def __init__(self, vending_machine):
+        """
+        This class provides and updates data form VendingMachine class.
+
+        :param vending_machine: VendingMachine object
+        """
         self.vending_machine = vending_machine
 
     def buy_product(self, product_id, label_summary, label_inserted_money):
+        """
+        Buys product and displays message depending on result.
+
+        When buying process is not successful the retry dialog window is shown.
+
+        :param product_id: chosen product_id
+        :param label_summary: label that displays result
+        :param label_inserted_money: label that displays inserted money
+        """
         if not product_id:
             label_summary['text'] = "Wprowadź numer produktu"
         else:
@@ -197,10 +234,12 @@ class VendingMachineService:
                 self.show_transaction_summary(displayed_text, label_summary, label_inserted_money)
 
     def insert_coin(self, val, label_inserted_money):
+        """Inserts coin when coin button clicked."""
         self.vending_machine.insert_coin(val)
         self.print_inserted_money(label_inserted_money)
 
     def print_inserted_money(self, label_inserted_money):
+        """Prints inserted money."""
         if self.vending_machine.inserted_money < PLN_1:
             gr = self.vending_machine.inserted_money
             label_inserted_money['text'] = f"Wpłaciles: {gr} gr"
@@ -210,6 +249,7 @@ class VendingMachineService:
             label_inserted_money['text'] = f"Wpłaciles: {zl} zł {gr} gr"
 
     def get_displayed_text(self, result, product_id):
+        """Provides displayed text depending on buying result."""
         switcher = {
             vm.BAD_PRODUCT_ID: "Podaj numer produktu pomiędzy 30 a 50.",
             vm.NOT_ENOUGH_MONEY: "Za mało pieniędzy.",
@@ -227,6 +267,7 @@ class VendingMachineService:
 
     @staticmethod
     def print_returned_coins(coins):
+        """Prints returned coins."""
         printed_coins = "Zwrócone monety: \n"
         for key, value in coins.items():
             if value > 0:
@@ -237,16 +278,19 @@ class VendingMachineService:
         return printed_coins
 
     def show_retry_dialog_window(self, displayed_text, label_summary, label_inserted_money):
+        """Shows retry dialog when buying is not successful."""
         answer = messagebox.askyesno("Zakup nie powiódł się", f"{displayed_text}\n\nSpróbować ponownie?")
         if not answer:
             self.cancel_transaction(label_summary, label_inserted_money)
 
     def cancel_transaction(self, label_summary, label_inserted_money):
+        """Cancels transaction. Displays returned coins."""
         label_summary['text'] = self.print_returned_coins(self.vending_machine.temp_coins)
         self.vending_machine.cancel_transaction()
         self.print_inserted_money(label_inserted_money)
 
     def show_transaction_summary(self, displayed_text, label_summary, label_inserted_money):
+        """Displays transaction summary."""
         label_summary['text'] = displayed_text
         self.vending_machine.cancel_transaction()
         self.print_inserted_money(label_inserted_money)
