@@ -13,14 +13,17 @@ FRAME_VALUE_X, FRAME_VALUE_Y, FRAME_VALUE_WIDTH, FRAME_VALUE_HEIGHT = 0.5, 0.47,
 LABEL_SUMMARY_Y, LABEL_SUMMARY_WIDTH, LABEL_SUMMARY_HEIGHT = 0, 0.48, 1
 LABEL_PRODUCTS_WIDTH, LABEL_PRODUCTS_HEIGHT = 1, 1
 INSERTED_MONEY_LABEL_X, INSERTED_MONEY_LABEL_Y, INSERTED_MONEY_LABEL_WIDTH, INSERTED_MONEY_LABEL_HEIGHT = 0.01, 0.25, 0.17, 0.5
-TEXTBOX_X, TEXTBOX_Y, TEXTBOX_WIDTH, TEXTBOX_HEIGHT = 0.52, 0.4, 0.3, 0.15
-COIN_BUTTON_INIT_X, COIN_BUTTON_Y, COIN_BUTTON_WIDTH, COIN_BUTTON_HEIGHT = 0.19, 0.25, 0.08, 0.5
-NUM_BUTTON_INIT_X, NUM_BUTTON_INIT_Y, NUM_BUTTON_WIDTH, NUM_BUTTON_HEIGHT = 0.61, 0.18, 0.09, 0.20
+COIN_BUTTON_INIT_X, COIN_BUTTON_Y, COIN_BUTTON_WIDTH, COIN_BUTTON_HEIGHT, COIN_BUTTON_SPACE = 0.19, 0.25, 0.08, 0.5, 0.01
+NUM_BUTTON_INIT_X, NUM_BUTTON_INIT_Y, NUM_BUTTON_WIDTH, NUM_BUTTON_HEIGHT, NUM_BUTTONS_AMOUNT = 0.61, 0.18, 0.09, 0.20, 10
 LABEL_PRODUCT_ID_X, LABEL_PRODUCT_ID_Y, LABEL_PRODUCT_ID_WIDTH, LABEL_PRODUCT_ID_HEIGHT = 0.61, 0.01, 0.27, 0.15
 DEFAULT_LABEL_PRODUCT_ID_TEXT = "Wprowadź numer produktu"
 BUY_BUTTON_X, BUY_BUTTON_Y, BUY_BUTTON_WIDTH, BUY_BUTTON_HEIGHT = 0.70, 0.78, 0.09, 0.20
 CANCEL_BUTTON_X, CANCEL_BUTTON_Y, CANCEL_BUTTON_WIDTH, CANCEL_BUTTON_HEIGHT = 0.79, 0.78, 0.09, 0.20
 PRODUCT_COLUMN_OFFSET = 30
+PRODUCTS_IN_A_ROW = 3
+NUMS_IN_THE_ROW = 3
+PLN_1 = 100
+MAX_PRODUCT_ID_LEN = 2
 
 
 class VendingMachineMainView:
@@ -72,16 +75,15 @@ class VendingMachineMainView:
     def init_coin_buttons(self):
         buttons = []
         for denomination in vm.DENOMINATIONS:
-            if denomination < 100:
-                buttons.append(tk.Button(self.frame_coins, text=f"{denomination}gr",
-                                         bg='grey',
-                                         command=lambda d=denomination:
-                                         self.vending_machine_service.insert_coin(d, self.label_inserted_money)))
+            if denomination < PLN_1:
+                text = f"{denomination}gr"
             else:
-                buttons.append(tk.Button(self.frame_coins, text=f"{int(denomination / 100)}zl",
-                                         bg='grey',
-                                         command=lambda d=denomination:
-                                         self.vending_machine_service.insert_coin(d, self.label_inserted_money)))
+                text = f"{int(denomination / PLN_1)}zl"
+
+            button = tk.Button(self.frame_coins, text=text, bg='grey',
+                               command=lambda d=denomination:
+                               self.vending_machine_service.insert_coin(d, self.label_inserted_money))
+            buttons.append(button)
         self.place_coin_buttons(buttons)
 
     @staticmethod
@@ -89,7 +91,7 @@ class VendingMachineMainView:
         relx = COIN_BUTTON_INIT_X
         for button in buttons:
             button.place(relx=relx, rely=COIN_BUTTON_Y, relwidth=COIN_BUTTON_WIDTH, relheight=COIN_BUTTON_HEIGHT)
-            relx += 0.09
+            relx += COIN_BUTTON_WIDTH + COIN_BUTTON_SPACE
 
     def init_frame_product_list_content(self):
         label_products = tk.Label(self.frame_product_list, bg=LABEL_BG_COLOR)
@@ -113,11 +115,6 @@ class VendingMachineMainView:
         label_summary = tk.Label(self.frame_inserted_value)
         label_summary.place(relwidth=LABEL_SUMMARY_WIDTH, relheight=LABEL_SUMMARY_HEIGHT, rely=LABEL_SUMMARY_Y)
         return label_summary
-
-    def init_textbox(self):
-        textbox = tk.Entry(self.frame_inserted_value, font=40)
-        textbox.place(relx=TEXTBOX_X, rely=TEXTBOX_Y, relwidth=TEXTBOX_WIDTH, relheight=TEXTBOX_HEIGHT)
-        return textbox
 
     def init_buy_button(self, label_summary, label_product_id):
         button_buy = tk.Button(self.frame_inserted_value, text="KUP", bg='grey',
@@ -144,12 +141,12 @@ class VendingMachineMainView:
 
     def init_product_num_buttons(self, label_product_id):
         buttons = []
-        for num in range(0, 10):
+        for num in range(NUM_BUTTONS_AMOUNT):
             button = tk.Button(self.frame_inserted_value, text=f"{num}",
                                bg='grey',
                                command=lambda n=num: self.update_chosen_product_id(n, label_product_id))
             if num == 0:
-                buttons.insert(9, button)
+                buttons.insert(NUM_BUTTONS_AMOUNT-1, button)
             else:
                 buttons.insert(num-1, button)
         self.place_product_num_buttons(buttons)
@@ -160,13 +157,13 @@ class VendingMachineMainView:
         rely = NUM_BUTTON_INIT_Y
         for i, button in enumerate(buttons):
             button.place(relx=relx, rely=rely, relwidth=NUM_BUTTON_WIDTH, relheight=NUM_BUTTON_HEIGHT)
-            relx += 0.09
-            if (i+1) % 3 == 0:
+            relx += NUM_BUTTON_WIDTH
+            if (i+1) % NUMS_IN_THE_ROW == 0:
                 rely += NUM_BUTTON_HEIGHT
                 relx = NUM_BUTTON_INIT_X
 
     def update_chosen_product_id(self, num, label_product_id):
-        if len(self.chosen_product_id) == 2:
+        if len(self.chosen_product_id) == MAX_PRODUCT_ID_LEN:
             self.chosen_product_id = ''
         self.chosen_product_id += str(num)
         label_product_id['text'] = self.chosen_product_id
@@ -181,7 +178,7 @@ class VendingMachineMainView:
 
     @staticmethod
     def product_list_break_line(index, label_products):
-        if index > 1 and (index + 1) % 3 == 0:
+        if index > 1 and (index + 1) % PRODUCTS_IN_A_ROW == 0:
             label_products['text'] += "\n"
 
 
@@ -205,11 +202,12 @@ class VendingMachineService:
         self.print_inserted_money(label_inserted_money)
 
     def print_inserted_money(self, label_inserted_money):
-        if self.vending_machine.inserted_money < 100:
-            label_inserted_money['text'] = f"Wpłaciles: {self.vending_machine.inserted_money} gr"
+        if self.vending_machine.inserted_money < PLN_1:
+            gr = self.vending_machine.inserted_money
+            label_inserted_money['text'] = f"Wpłaciles: {gr} gr"
         else:
-            zl = int(self.vending_machine.inserted_money / 100)
-            gr = int(self.vending_machine.inserted_money % 100)
+            zl = int(self.vending_machine.inserted_money / PLN_1)
+            gr = int(self.vending_machine.inserted_money % PLN_1)
             label_inserted_money['text'] = f"Wpłaciles: {zl} zł {gr} gr"
 
     def get_displayed_text(self, result, product_id):
@@ -233,10 +231,10 @@ class VendingMachineService:
         printed_coins = "Zwrócone monety: \n"
         for key, value in coins.items():
             if value > 0:
-                if key < 100:
+                if key < PLN_1:
                     printed_coins += f"{key}gr: x{value}\n"
                 else:
-                    printed_coins += f"{key/100}zł: x{value}\n"
+                    printed_coins += f"{key/PLN_1}zł: x{value}\n"
         return printed_coins
 
     def show_retry_dialog_window(self, displayed_text, label_summary, label_inserted_money):
@@ -258,29 +256,13 @@ class VendingMachineService:
 def main():
     root = tk.Tk()
     root.configure(background=ROOT_BG_COLOR, height=ROOT_HEIGHT, width=ROOT_WIDTH)
-    products = [
-            vm.Product(30, "Coca Cola", 220),
-            vm.Product(31, "Fanta", 210),
-            vm.Product(32, "Coca Cola", 220),
-            vm.Product(33, "Fanta", 210),
-            vm.Product(34, "Coca Cola", 220),
-            vm.Product(35, "Fanta", 210),
-            vm.Product(36, "Coca Cola", 220),
-            vm.Product(37, "Fanta", 210),
-            vm.Product(38, "Coca Cola", 220),
-            vm.Product(39, "Fanta", 210),
-            vm.Product(40, "Coca Cola", 220),
-            vm.Product(41, "Fanta", 210),
-            vm.Product(42, "Coca Cola", 220),
-            vm.Product(43, "Fanta", 210),
-            vm.Product(44, "Coca Cola", 220),
-            vm.Product(45, "Fanta", 210),
-            vm.Product(46, "Coca Cola", 220),
-            vm.Product(47, "Fanta", 210),
-            vm.Product(48, "Coca Cola", 220),
-            vm.Product(49, "Fanta", 210),
-            vm.Product(50, "Coca Cola", 220)
-        ]
+    products = []
+    for i in range(7):
+        product_id = vm.MIN_PRODUCT_ID+(3*i)
+        products.append(vm.Product(product_id, "Coke", 220))
+        products.append(vm.Product(product_id+1, "Fanta", 210))
+        products.append(vm.Product(product_id+2, "Sprite", 250))
+
     vending_machine = vm.VendingMachine(products)
     vending_machine_service = VendingMachineService(vending_machine)
     VendingMachineMainView(root, vending_machine_service, products)

@@ -6,6 +6,7 @@ DEFAULT_COIN_QUANTITY = 5
 DEFAULT_PRODUCT_QUANTITY = 5
 BAD_PRODUCT_ID, NOT_ENOUGH_MONEY, BOUGHT_RETURNED_CHANGE,  STOCK_SHORTAGE, BOUGHT_EXACT_CHANGE, UNABLE_TO_GIVE_CHANGE = range(6)
 MIN_PRODUCT_ID, MAX_PRODUCT_ID = 30, 50
+PLN_1 = 100
 
 
 class Product:
@@ -15,7 +16,7 @@ class Product:
         self.price = price
 
     def __str__(self) -> str:
-        return f"{self.product_id}.{self.name}: {int(self.price/100)}zł {self.price%100}gr"
+        return f"{self.product_id}.{self.name}: {int(self.price/PLN_1)}zł {self.price%PLN_1}gr"
 
     def __eq__(self, other):
         if not isinstance(other, Product):
